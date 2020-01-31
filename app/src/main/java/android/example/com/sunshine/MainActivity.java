@@ -14,7 +14,5 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_forecast);
 
         mWeatherTextView = findViewById(R.id.tv_weather_data);
-
-
     }
 }
