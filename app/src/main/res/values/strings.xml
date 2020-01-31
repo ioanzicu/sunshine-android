@@ -112,6 +112,6 @@
     <!-- Menu Items-->
     <!-- - - - - - - - - - - -->
     <string name="action_refresh">Refresh</string>
-    <string name="error_message">Failed to get results, please try again!</string>
+    <string name="error_message">Failed to get results. Check the internet connection and try again!</string>
 
 </resources>
