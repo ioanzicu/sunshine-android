@@ -37,11 +37,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadWeatherData() {
+        showWeatherDataView();
+
         String location = SunshinePreferences.getPreferredWeatherLocation(this);
         new FetchWeatherTask().execute(location);
     }
 
-    private void showJsonDataView() {
+    private void showWeatherDataView() {
         mErrorMessageDisplay.setVisibility(View.INVISIBLE);
         mWeatherTextView.setVisibility(View.VISIBLE);
     }
