@@ -106,6 +106,7 @@
 
     <string name="condition_unknown">Unknown (<xliff:g id="conditionId">%1$d</xliff:g>)
     </string>
+    <string name="search">search</string>
 
 
     <!-- - - - - - - - - - - -->
