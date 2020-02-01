@@ -1,5 +1,6 @@
 package android.example.com.sunshine;
 
+import android.content.Intent;
 import android.example.com.sunshine.data.SunshinePreferences;
 import android.example.com.sunshine.utilities.NetworkUtils;
 import android.example.com.sunshine.utilities.OpenWeatherJsonUtils;
@@ -28,8 +29,6 @@ public class MainActivity extends AppCompatActivity
 
     private TextView mErrorMessageDisplay;
     private ProgressBar mLoadingIndicator;
-
-    private Toast mToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,10 +138,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onClick(String weatherForDay) {
-        if (mToast != null) {
-            mToast.cancel();
-        }
-
-        Toast.makeText(this, weatherForDay, Toast.LENGTH_LONG).show();
+        Class destinationClass = DetailActivity.class;
+        Intent intentToStartDetailActivity = new Intent(MainActivity.this, destinationClass);
+        startActivity(intentToStartDetailActivity);
     }
 }
