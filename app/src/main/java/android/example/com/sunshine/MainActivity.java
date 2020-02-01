@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
@@ -19,15 +20,16 @@ import org.json.JSONException;
 import java.io.IOException;
 import java.net.URL;
 
-import static androidx.recyclerview.widget.RecyclerView.*;
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+        implements ForecastAdapter.ForecastAdapterOnClickHandler {
 
     private RecyclerView mRecyclerView;
     private ForecastAdapter mForecastAdapter;
 
     private TextView mErrorMessageDisplay;
     private ProgressBar mLoadingIndicator;
+
+    private Toast mToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +47,11 @@ public class MainActivity extends AppCompatActivity {
 
         mRecyclerView.setHasFixedSize(true);
 
-        mForecastAdapter = new ForecastAdapter();
+        /**
+         * The ForecastAdapter is responsible for linking our weather data with the Views that
+         * will end up displaying our weather data.
+         */
+        mForecastAdapter = new ForecastAdapter(this);
 
         mRecyclerView.setAdapter(mForecastAdapter);
 
@@ -129,5 +135,14 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onClick(String weatherForDay) {
+        if (mToast != null) {
+            mToast.cancel();
+        }
+
+        Toast.makeText(this, weatherForDay, Toast.LENGTH_LONG).show();
     }
 }
