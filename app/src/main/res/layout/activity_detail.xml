@@ -7,10 +7,10 @@
         tools:context=".DetailActivity">
 
     <TextView
+            android:id="@+id/tv_display_weather"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="Details">
-
-    </TextView>
+            android:textSize="22sp"
+            tools:text="Details"/>
 
 </FrameLayout>

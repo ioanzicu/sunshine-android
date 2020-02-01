@@ -139,7 +139,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onClick(String weatherForDay) {
         Class destinationClass = DetailActivity.class;
+
         Intent intentToStartDetailActivity = new Intent(MainActivity.this, destinationClass);
+
+        intentToStartDetailActivity.putExtra(Intent.EXTRA_TEXT, weatherForDay);
         startActivity(intentToStartDetailActivity);
     }
 }
