@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.core.app.ShareCompat;
@@ -48,12 +49,25 @@ public class DetailActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.details_menu, menu);
+        getMenuInflater().inflate(R.menu.details, menu);
 
         MenuItem menuItem = menu.findItem(R.id.action_share);
 
         menuItem.setIntent(buildShareForecastIntent());
         /* Return true so that the menu is displayed in the Toolbar */
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_settings) {
+            Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
+            startActivity(startSettingsActivity);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }
