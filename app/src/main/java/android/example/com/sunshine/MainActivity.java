@@ -1,11 +1,11 @@
 package android.example.com.sunshine;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.example.com.sunshine.data.SunshinePreferences;
 import android.example.com.sunshine.utilities.NetworkUtils;
 import android.example.com.sunshine.utilities.OpenWeatherJsonUtils;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,6 +19,7 @@ import android.os.Bundle;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.AsyncTaskLoader;
 import androidx.loader.content.Loader;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import org.json.JSONException;
@@ -28,11 +29,14 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity
         implements ForecastAdapter.ForecastAdapterOnClickHandler,
+        SharedPreferences.OnSharedPreferenceChangeListener,
         LoaderManager.LoaderCallbacks<String[]> {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
     private static final int FORECAST_LOADER_ID = 33;
+
+    private static boolean PREFERENCE_HAVE_BEEN_UPDATED = false;
 
     private RecyclerView mRecyclerView;
     private ForecastAdapter mForecastAdapter;
@@ -91,6 +95,16 @@ public class MainActivity extends AppCompatActivity
          * the last created loader is re-used.
          */
         LoaderManager.getInstance(this).initLoader(loaderId, bundleForecast, callbacks);
+
+        Log.d(TAG, "onCreate: registering preference changed listener");
+
+        /*
+         * Register MainActivity as an OnPreferenceChangedListener to receive a callback when a
+         * SharedPreference has changed. Please note that we must unregister MainActivity as an
+         * OnSharedPreferenceChanged listener in onDestroy to avoid any memory leaks.
+         */
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .registerOnSharedPreferenceChangeListener(this);
     }
 
     private void showWeatherDataView() {
@@ -101,6 +115,32 @@ public class MainActivity extends AppCompatActivity
     private void showErrorMessage() {
         mRecyclerView.setVisibility(View.INVISIBLE);
         mErrorMessageDisplay.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * OnStart is called when the Activity is coming into view. This happens when the Activity is
+     * first created, but also happens when the Activity is returned to from another Activity. We
+     * are going to use the fact that onStart is called when the user returns to this Activity to
+     * check if the location setting or the preferred units setting has changed. If it has changed,
+     * we are going to perform a new query.
+     */
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if (PREFERENCE_HAVE_BEEN_UPDATED) {
+            Log.d(TAG, "onStart: preferences were updated");
+            LoaderManager.getInstance(this).restartLoader(FORECAST_LOADER_ID, null, this);
+            PREFERENCE_HAVE_BEEN_UPDATED = false;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        /* Unregister MainActivity as an OnPreferenceChangedListener to avoid any memory leaks. */
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .unregisterOnSharedPreferenceChangeListener(this);
     }
 
     @NonNull
@@ -219,8 +259,7 @@ public class MainActivity extends AppCompatActivity
      * @see <a"http://developer.android.com/guide/components/intents-common.html#Maps">
      */
     private void openLocationInMap() {
-
-        String addressString = "1600 Ampitheatre Parkway, CA";
+        String addressString = SunshinePreferences.getPreferredWeatherLocation(this);
         Uri geoLocation = Uri.parse("geo:0,0?q=" + addressString);
 
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -231,5 +270,10 @@ public class MainActivity extends AppCompatActivity
         } else {
             Log.d(TAG, "Couldn't call " + geoLocation.toString() + ", no receiving apps installed!");
         }
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        PREFERENCE_HAVE_BEEN_UPDATED = true;
     }
 }
