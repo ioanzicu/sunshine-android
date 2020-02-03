@@ -27,12 +27,12 @@ public class WeatherContract {
      * Possible paths that can be appended to BASE_CONTENT_URI to form valid URI's that Sunshine
      * can handle. For instance,
      *
-     *     content://com.example.android.sunshine/weather/
+     *     content://android.example.com.sunshine/weather/
      *     [           BASE_CONTENT_URI         ][ PATH_WEATHER ]
      *
      * is a valid path for looking at weather data.
      *
-     *      content://com.example.android.sunshine/givemeroot/
+     *      content://android.example.com.sunshine/givemeroot/
      *
      * will fail, as the ContentProvider hasn't been given any information on what to do with
      * "givemeroot". At least, let's hope not. Don't be that dev, reader. Don't be that dev.

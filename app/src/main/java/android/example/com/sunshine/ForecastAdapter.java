@@ -3,6 +3,7 @@ package android.example.com.sunshine;
 import android.content.Context;
 import android.database.Cursor;
 import android.example.com.sunshine.data.SunshinePreferences;
+import android.example.com.sunshine.utilities.SunshineDateUtils;
 import android.example.com.sunshine.utilities.SunshineWeatherUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,7 +25,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
     private final ForecastAdapterOnClickHandler mClickHandler;
 
     public interface ForecastAdapterOnClickHandler {
-        void onClick(String weatherForDay);
+        void onClick(long date);
     }
 
     public ForecastAdapter(ForecastAdapterOnClickHandler clickHandler, Context context) {
@@ -53,7 +54,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
         /* Read date from the cursor */
         long dateInMillis = mCursor.getLong(MainActivity.INDEX_WEATHER_DATE);
         /* Get human readable string using our utility method */
-        String dateString = SunshinePreferences.getFriendlyDateString(mContext, dateInMillis, false);
+        String dateString = SunshineDateUtils.getFriendlyDateString(mContext, dateInMillis, false);
         /* Use the weatherId to obtain the proper description */
         int weatherId = mCursor.getInt(MainActivity.INDEX_WEATHER_CONDITION_ID);
         String description = SunshineWeatherUtils.getStringForWeatherCondition(mContext, weatherId);
@@ -104,8 +105,10 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
          */
         @Override
         public void onClick(View v) {
-            String weatherForDay = weatherSummary.getText().toString();
-            mClickHandler.onClick(weatherForDay);
+            int adapterPosition = getAdapterPosition();
+            mCursor.moveToPosition(adapterPosition);
+            long dateInMillis = mCursor.getLong(MainActivity.INDEX_WEATHER_DATE);
+            mClickHandler.onClick(dateInMillis);
         }
     }
 }
