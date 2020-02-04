@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity
          */
         LoaderManager.getInstance(this).initLoader(FORECAST_LOADER_ID, null, this);
 
-        SunshineSyncUtils.startImmediateSync(this);
+        SunshineSyncUtils.initialize(this);
     }
 
     private void showWeatherDataView() {
