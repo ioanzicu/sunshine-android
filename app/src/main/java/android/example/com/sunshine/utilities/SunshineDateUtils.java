@@ -9,6 +9,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 public class SunshineDateUtils {
+
     /* Milliseconds in a day */
     public static final long DAY_IN_MILLIS = TimeUnit.DAYS.toMillis(1);
 

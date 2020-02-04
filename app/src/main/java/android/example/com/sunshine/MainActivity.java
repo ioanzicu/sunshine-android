@@ -5,9 +5,12 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.example.com.sunshine.data.SunshinePreferences;
 import android.example.com.sunshine.data.WeatherContract;
+import android.example.com.sunshine.sync.SunshineSyncTask;
+import android.example.com.sunshine.sync.SunshineSyncUtils;
 import android.example.com.sunshine.utilities.FakeDataUtils;
 import android.example.com.sunshine.utilities.NetworkUtils;
 import android.example.com.sunshine.utilities.OpenWeatherJsonUtils;
+import android.example.com.sunshine.utilities.SunshineDateUtils;
 import android.net.Uri;
 import android.util.Log;
 import android.view.Menu;
@@ -72,9 +75,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_forecast);
         getSupportActionBar().setElevation(0f);
 
-
-        FakeDataUtils.insertFakeData(this);
-
         mRecyclerView = findViewById(R.id.recyclerview_forecast);
 
         mLoadingIndicator = findViewById(R.id.pb_loading_indicator);
@@ -102,6 +102,8 @@ public class MainActivity extends AppCompatActivity
          * the last created loader is re-used.
          */
         LoaderManager.getInstance(this).initLoader(FORECAST_LOADER_ID, null, this);
+
+        SunshineSyncUtils.startImmediateSync(this);
     }
 
     private void showWeatherDataView() {

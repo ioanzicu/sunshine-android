@@ -6,6 +6,7 @@ import android.example.com.sunshine.data.SunshinePreferences;
 import android.util.Log;
 
 public class SunshineWeatherUtils {
+
     private static final String LOG_TAG = SunshineWeatherUtils.class.getSimpleName();
 
     /**

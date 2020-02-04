@@ -1,6 +1,11 @@
 package android.example.com.sunshine;
 
+import android.app.Activity;
 import android.content.SharedPreferences;
+import android.example.com.sunshine.data.SunshinePreferences;
+import android.example.com.sunshine.data.WeatherContract;
+import android.example.com.sunshine.sync.SunshineSyncTask;
+import android.example.com.sunshine.sync.SunshineSyncUtils;
 import android.os.Bundle;
 import androidx.preference.*;
 
@@ -54,6 +59,17 @@ public class SettingsFragment extends PreferenceFragmentCompat
      */
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        Activity activity = getActivity();
+
+        if (key.equals(getString(R.string.pref_location_key))) {
+            SunshinePreferences.resetLocationCoordinates(activity);
+
+            SunshineSyncUtils.startImmediateSync(activity);
+        } else if (key.equals(getString(R.string.pref_units_key))) {
+            // units have changed. update lists of weather entries accordingly
+            activity.getContentResolver().notifyChange(WeatherContract.WeatherEntry.CONTENT_URI, null);
+        }
+
         Preference preference = findPreference(key);
         if (null != preference) {
             if (!(preference instanceof CheckBoxPreference)) {
