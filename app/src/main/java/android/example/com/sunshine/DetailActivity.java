@@ -2,54 +2,59 @@ package android.example.com.sunshine;
 
 import android.content.Intent;
 import android.database.Cursor;
-import android.example.com.sunshine.data.SunshinePreferences;
+import android.example.com.sunshine.data.WeatherContract;
 import android.example.com.sunshine.utilities.SunshineDateUtils;
 import android.example.com.sunshine.utilities.SunshineWeatherUtils;
 import android.net.Uri;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.TextView;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ShareCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.CursorLoader;
 import androidx.loader.content.Loader;
 
-import static android.example.com.sunshine.data.WeatherContract.*;
-
 public class DetailActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
-    public static final String FORECAST_SHARE_HASHTAG = " #SunshineApp";
+    // extra_weather_details views
+    private TextView mHumidityTextView;
+    private TextView mHumidityLabelTextView;
+    private TextView mPressureTextView;
+    private TextView mPressureLabel;
+    private TextView mWindMeasurement;
+    private TextView mWindLabel;
 
-    private Uri mUri;
-
-    private TextView mDateView;
-    private TextView mDescriptionView;
+    // primary_weather_info views
+    private TextView mDateTextView;
+    private ImageView mWeatherIcon;
+    private TextView mWeatherDescription;
     private TextView mHighTemperature;
     private TextView mLowTemperature;
-    private TextView mDayHumidity;
-    private TextView mPressureView;
-    private TextView mWindView;
 
-    private String mForecastSummary;
+    /*
+     * In this Activity, you can share the selected day's forecast. No social sharing is complete
+     * without using a hashtag. #BeTogetherNotTheSame
+     */
+    private static final String FORECAST_SHARE_HASHTAG = " #SunshineApp";
 
     /*
      * The columns of data that we are interested in displaying within our DetailActivity's
      * weather display.
      */
     public static final String[] WEATHER_DETAIL_PROJECTION = {
-            WeatherEntry.COLUMN_DATE,
-            WeatherEntry.COLUMN_MAX_TEMP,
-            WeatherEntry.COLUMN_MIN_TEMP,
-            WeatherEntry.COLUMN_HUMIDITY,
-            WeatherEntry.COLUMN_PRESSURE,
-            WeatherEntry.COLUMN_WIND_SPEED,
-            WeatherEntry.COLUMN_DEGREES,
-            WeatherEntry.COLUMN_WEATHER_ID
+            WeatherContract.WeatherEntry.COLUMN_DATE,
+            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
+            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
+            WeatherContract.WeatherEntry.COLUMN_HUMIDITY,
+            WeatherContract.WeatherEntry.COLUMN_PRESSURE,
+            WeatherContract.WeatherEntry.COLUMN_WIND_SPEED,
+            WeatherContract.WeatherEntry.COLUMN_DEGREES,
+            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID
     };
 
     /*
@@ -66,66 +71,95 @@ public class DetailActivity extends AppCompatActivity
     public static final int INDEX_WEATHER_DEGREES = 6;
     public static final int INDEX_WEATHER_CONDITION_ID = 7;
 
-    private static final int DETAIL_LOADER_ID = 44;
+    /*
+     * This ID will be used to identify the Loader responsible for loading the weather details
+     * for a particular day. In some cases, one Activity can deal with many Loaders. However, in
+     * our case, there is only one. We will still use this ID to initialize the loader and create
+     * the loader for best practice. Please note that 353 was chosen arbitrarily. You can use
+     * whatever number you like, so long as it is unique and consistent.
+     */
+    private static final int ID_DETAIL_LOADER = 353;
+
+    /* A summary of the forecast that can be shared by clicking the share button in the ActionBar */
+    private String mForecastSummary;
+
+    /* The URI that is used to access the chosen day's weather details */
+    private Uri mUri;
+
+    /*
+     * This field is used for data binding. Normally, we would have to call findViewById many
+     * times to get references to the Views in this Activity. With data binding however, we only
+     * need to call DataBindingUtil.setContentView and pass in a Context and a layout, as we do
+     * in onCreate of this class. Then, we can access all of the Views in our layout
+     * programmatically without cluttering up the code with findViewById.
+     */
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail);
 
-        mDateView = findViewById(R.id.date);
-        mDescriptionView = findViewById(R.id.weather_description);
+        mHumidityTextView = findViewById(R.id.humidity);
+        mHumidityLabelTextView = findViewById(R.id.humidity_label);
+        mPressureTextView = findViewById(R.id.pressure);
+        mPressureLabel = findViewById(R.id.pressure_label);
+        mWindMeasurement = findViewById(R.id.wind_measurement);
+        mWindLabel = findViewById(R.id.wind_label);
+
+        mDateTextView = findViewById(R.id.date);
+        mWeatherIcon = findViewById(R.id.weather_icon);
+        mWeatherDescription = findViewById(R.id.weather_description);
         mHighTemperature = findViewById(R.id.high_temperature);
         mLowTemperature = findViewById(R.id.low_temperature);
-        mDayHumidity = findViewById(R.id.humidity);
-        mPressureView = findViewById(R.id.pressure);
-        mWindView = findViewById(R.id.wind);
 
         mUri = getIntent().getData();
-
         if (mUri == null) throw new NullPointerException("URI for DetailActivity cannot be null");
 
-        LoaderManager.getInstance(this).initLoader(DETAIL_LOADER_ID, null, this);
+        /* This connects our Activity into the loader lifecycle. */
+        LoaderManager.getInstance(this).initLoader(ID_DETAIL_LOADER, null, this);
     }
 
     /**
-     * Uses the ShareCompat Intent builder to create our Forecast intent for sharing. We set the
-     * type of content that we are sharing (just regular text), the text itself, and we return the
-     * newly created Intent.
+     * This is where we inflate and set up the menu for this Activity.
      *
-     * @return The Intent to use to start our share.
+     * @param menu The options menu in which you place your items.
+     * @return You must return true for the menu to be displayed;
+     * if you return false it will not be shown.
+     * @see android.app.Activity#onPrepareOptionsMenu(Menu)
+     * @see #onOptionsItemSelected
      */
-    private Intent buildShareForecastIntent() {
-        return ShareCompat.IntentBuilder.from(this)
-                .setType("text/plain")
-                .setText(mForecastSummary + FORECAST_SHARE_HASHTAG)
-                .getIntent();
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.details, menu);
-
-        MenuItem menuItem = menu.findItem(R.id.action_share);
-
-        menuItem.setIntent(buildShareForecastIntent());
+        /* Use AppCompatActivity's method getMenuInflater to get a handle on the menu inflater */
+        MenuInflater inflater = getMenuInflater();
+        /* Use the inflater's inflate method to inflate our menu layout to this menu */
+        inflater.inflate(R.menu.details, menu);
         /* Return true so that the menu is displayed in the Toolbar */
         return true;
     }
 
+    /**
+     * Callback invoked when a menu item was selected from this Activity's menu. Android will
+     * automatically handle clicks on the "up" button for us so long as we have specified
+     * DetailActivity's parent Activity in the AndroidManifest.
+     *
+     * @param item The menu item that was selected by the user
+     * @return true if you handle the menu click here, false otherwise
+     */
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    public boolean onOptionsItemSelected(MenuItem item) {
+        /* Get the ID of the clicked item */
         int id = item.getItemId();
 
+        /* Settings menu item clicked */
         if (id == R.id.action_settings) {
-            Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
-            startActivity(startSettingsActivity);
+            startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }
 
         /* Share menu item clicked */
         if (id == R.id.action_share) {
-            Intent shareIntent = buildShareForecastIntent();
+            Intent shareIntent = createShareForecastIntent();
             startActivity(shareIntent);
             return true;
         }
@@ -133,24 +167,38 @@ public class DetailActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @NonNull
+    /**
+     * Uses the ShareCompat Intent builder to create our Forecast intent for sharing.  All we need
+     * to do is set the type, text and the NEW_DOCUMENT flag so it treats our share as a new task.
+     * See: http://developer.android.com/guide/components/tasks-and-back-stack.html for more info.
+     *
+     * @return the Intent to use to share our weather forecast
+     */
+    private Intent createShareForecastIntent() {
+        Intent shareIntent = ShareCompat.IntentBuilder.from(this)
+                .setType("text/plain")
+                .setText(mForecastSummary + FORECAST_SHARE_HASHTAG)
+                .getIntent();
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        return shareIntent;
+    }
+
+    /**
+     * Creates and returns a CursorLoader that loads the data for our URI and stores it in a Cursor.
+     *
+     * @param loaderId   The loader ID for which we need to create a loader
+     * @param loaderArgs Any arguments supplied by the caller
+     * @return A new Loader instance that is ready to start loading.
+     */
     @Override
-    public Loader<Cursor> onCreateLoader(int loaderId, @Nullable Bundle args) {
+    public Loader<Cursor> onCreateLoader(int loaderId, Bundle loaderArgs) {
+
         switch (loaderId) {
-            case DETAIL_LOADER_ID:
-                /* URI for all rows of weather data in our weather table */
-                Uri forecastQueryUri = WeatherEntry.CONTENT_URI;
-                /* Sort order: Ascending by date */
-                String sortOrder = WeatherEntry.COLUMN_DATE + " ASC";
-                /*
-                 * A SELECTION in SQL declares which rows you'd like to return. In our case, we
-                 * want all weather data from today onwards that is stored in our weather table.
-                 * We created a handy method to do that in our WeatherEntry class.
-                 */
-                String selection = WeatherEntry.getSqlSelectForTodayOnwards();
+
+            case ID_DETAIL_LOADER:
 
                 return new CursorLoader(this,
-                        forecastQueryUri,
+                        mUri,
                         WEATHER_DETAIL_PROJECTION,
                         null,
                         null,
@@ -161,50 +209,187 @@ public class DetailActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Runs on the main thread when a load is complete. If initLoader is called (we call it from
+     * onCreate in DetailActivity) and the LoaderManager already has completed a previous load
+     * for this Loader, onLoadFinished will be called immediately. Within onLoadFinished, we bind
+     * the data to our views so the user can see the details of the weather on the date they
+     * selected from the forecast.
+     *
+     * @param loader The cursor loader that finished.
+     * @param data   The cursor that is being returned.
+     */
     @Override
-    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
-        boolean cursorHasValidData = false;
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
 
+        /*
+         * Before we bind the data to the UI that will display that data, we need to check the
+         * cursor to make sure we have the results that we are expecting. In order to do that, we
+         * check to make sure the cursor is not null and then we call moveToFirst on the cursor.
+         * Although it may not seem obvious at first, moveToFirst will return true if it contains
+         * a valid first row of data.
+         *
+         * If we have valid data, we want to continue on to bind that data to the UI. If we don't
+         * have any data to bind, we just return from this method.
+         */
+        boolean cursorHasValidData = false;
         if (data != null && data.moveToFirst()) {
+            /* We have valid data, continue on to bind the data to the UI */
             cursorHasValidData = true;
         }
 
         if (!cursorHasValidData) {
+            /* No data to display, simply return and do nothing */
             return;
         }
 
+        /****************
+         * Weather Icon *
+         ****************/
+        /* Read weather condition ID from the cursor (ID provided by Open Weather Map) */
+        int weatherId = data.getInt(INDEX_WEATHER_CONDITION_ID);
+        /* Use our utility method to determine the resource ID for the proper art */
+        int weatherImageId = SunshineWeatherUtils.getLargeArtResourceIdForWeatherCondition(weatherId);
+
+        /* Set the resource ID on the icon to display the art */
+        mWeatherIcon.setImageResource(weatherImageId);
+
+        /****************
+         * Weather Date *
+         ****************/
+        /*
+         * Read the date from the cursor. It is important to note that the date from the cursor
+         * is the same date from the weather SQL table. The date that is stored is a GMT
+         * representation at midnight of the date when the weather information was loaded for.
+         *
+         * When displaying this date, one must add the GMT offset (in milliseconds) to acquire
+         * the date representation for the local date in local time.
+         * SunshineDateUtils#getFriendlyDateString takes care of this for us.
+         */
         long localDateMidnightGmt = data.getLong(INDEX_WEATHER_DATE);
         String dateText = SunshineDateUtils.getFriendlyDateString(this, localDateMidnightGmt, true);
 
-        mDateView.setText(dateText);
+        mDateTextView.setText(dateText);
 
-        int weatherId = data.getInt(INDEX_WEATHER_CONDITION_ID);
+        /***********************
+         * Weather Description *
+         ***********************/
+        /* Use the weatherId to obtain the proper description */
         String description = SunshineWeatherUtils.getStringForWeatherCondition(this, weatherId);
-        mDescriptionView.setText(description);
 
+        /* Create the accessibility (a11y) String from the weather description */
+        String descriptionA11y = getString(R.string.a11y_forecast, description);
+
+        /* Set the text and content description (for accessibility purposes) */
+        mWeatherDescription.setText(description);
+        mWeatherDescription.setContentDescription(descriptionA11y);
+
+        /* Set the content description on the weather image (for accessibility purposes) */
+        mWeatherIcon.setContentDescription(descriptionA11y);
+
+        /**************************
+         * High (max) temperature *
+         **************************/
+        /* Read high temperature from the cursor (in degrees celsius) */
         double highInCelsius = data.getDouble(INDEX_WEATHER_MAX_TEMP);
+        /*
+         * If the user's preference for weather is fahrenheit, formatTemperature will convert
+         * the temperature. This method will also append either °C or °F to the temperature
+         * String.
+         */
         String highString = SunshineWeatherUtils.formatTemperature(this, highInCelsius);
+
+        /* Create the accessibility (a11y) String from the weather description */
+        String highA11y = getString(R.string.a11y_high_temp, highString);
+
+        /* Set the text and content description (for accessibility purposes) */
         mHighTemperature.setText(highString);
+        mHighTemperature.setContentDescription(highA11y);
 
+        /*************************
+         * Low (min) temperature *
+         *************************/
+        /* Read low temperature from the cursor (in degrees celsius) */
         double lowInCelsius = data.getDouble(INDEX_WEATHER_MIN_TEMP);
+        /*
+         * If the user's preference for weather is fahrenheit, formatTemperature will convert
+         * the temperature. This method will also append either °C or °F to the temperature
+         * String.
+         */
         String lowString = SunshineWeatherUtils.formatTemperature(this, lowInCelsius);
-        mLowTemperature.setText(lowString);
 
+        String lowA11y = getString(R.string.a11y_low_temp, lowString);
+
+        /* Set the text and content description (for accessibility purposes) */
+        mLowTemperature.setText(lowString);
+        mLowTemperature.setContentDescription(lowA11y);
+
+        /************
+         * Humidity *
+         ************/
+        /* Read humidity from the cursor */
+        float humidity = data.getFloat(INDEX_WEATHER_HUMIDITY);
+        String humidityString = getString(R.string.format_humidity, humidity);
+
+        String humidityA11y = getString(R.string.a11y_humidity, humidityString);
+
+        /* Set the text and content description (for accessibility purposes) */
+        mHumidityTextView.setText(humidityString);
+        mHumidityTextView.setContentDescription(humidityA11y);
+        mHumidityLabelTextView.setContentDescription(humidityA11y);
+
+        /****************************
+         * Wind speed and direction *
+         ****************************/
+        /* Read wind speed (in MPH) and direction (in compass degrees) from the cursor  */
         float windSpeed = data.getFloat(INDEX_WEATHER_WIND_SPEED);
         float windDirection = data.getFloat(INDEX_WEATHER_DEGREES);
         String windString = SunshineWeatherUtils.getFormattedWind(this, windSpeed, windDirection);
-        mWindView.setText(windString);
 
+        String windA11y = getString(R.string.a11y_wind, windString);
+
+        /* Set the text and content description (for accessibility purposes) */
+        mWindMeasurement.setText(windString);
+        mWindMeasurement.setContentDescription(windA11y);
+
+        mWindLabel.setContentDescription(windA11y);
+
+        /************
+         * Pressure *
+         ************/
+        /* Read pressure from the cursor */
         float pressure = data.getFloat(INDEX_WEATHER_PRESSURE);
+
+        /*
+         * Format the pressure text using string resources. The reason we directly access
+         * resources using getString rather than using a method from SunshineWeatherUtils as
+         * we have for other data displayed in this Activity is because there is no
+         * additional logic that needs to be considered in order to properly display the
+         * pressure.
+         */
         String pressureString = getString(R.string.format_pressure, pressure);
 
-        mPressureView.setText(pressureString);
+        String pressureA11y = getString(R.string.a11y_pressure, pressureString);
 
-        mForecastSummary = String.format("%s - %s - %s/%s", dateText, description, highString, lowString);
+        /* Set the text and content description (for accessibility purposes) */
+        mPressureTextView.setText(pressureString);
+        mPressureTextView.setContentDescription(pressureA11y);
+
+        mPressureLabel.setContentDescription(pressureA11y);
+
+        /* Store the forecast summary String in our forecast summary field to share later */
+        mForecastSummary = String.format("%s - %s - %s/%s",
+                dateText, description, highString, lowString);
     }
 
+    /**
+     * Called when a previously created loader is being reset, thus making its data unavailable.
+     * The application should at this point remove any references it has to the Loader's data.
+     * Since we don't store any of this cursor's data, there are no references we need to remove.
+     *
+     * @param loader The Loader that is being reset.
+     */
     @Override
-    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
-
+    public void onLoaderReset(Loader<Cursor> loader) {
     }
 }
