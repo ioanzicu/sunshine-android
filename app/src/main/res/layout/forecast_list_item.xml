@@ -3,6 +3,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         xmlns:android="http://schemas.android.com/apk/res/android"
+        android:background="@drawable/touch_selector"
         android:minHeight="?android:attr/listPreferredItemHeight"
         android:paddingBottom="@dimen/list_item_padding_vertical"
         android:paddingLeft="@dimen/list_item_padding_horizontal"
