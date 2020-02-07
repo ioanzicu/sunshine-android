@@ -4,15 +4,16 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
+        android:background="@color/detail_accent_pane_background"
         android:id="@+id/extra_details"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="16dp"
-        android:paddingEnd="32dp"
-        android:paddingLeft="32dp"
-        android:paddingRight="32dp"
-        android:paddingStart="32dp"
-        android:paddingTop="16dp"
+        android:paddingBottom="@dimen/forecast_detail_vertical_padding"
+        android:paddingEnd="@dimen/forecast_detail_horizontal_padding"
+        android:paddingLeft="@dimen/forecast_detail_horizontal_padding"
+        android:paddingRight="@dimen/forecast_detail_horizontal_padding"
+        android:paddingStart="@dimen/forecast_detail_horizontal_padding"
+        android:paddingTop="@dimen/forecast_detail_vertical_padding"
 >
 
     <!-- This guideline divides the layout into a left and right half and is used for alignment -->
@@ -21,6 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:textColor="@color/detail_accent_label"
             app:layout_constraintGuide_percent="0.5"/>
 
     <!-- Humidity label -->
@@ -29,6 +31,8 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="@string/humidity_label"
+            android:fontFamily="sans-serif"
+            android:textColor="@color/detail_accent_label"
             app:layout_constraintBottom_toTopOf="@+id/pressure_label"
             app:layout_constraintLeft_toLeftOf="@+id/extra_details"
             app:layout_constraintTop_toTopOf="@+id/extra_details"
@@ -40,6 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="@{humidity}"
+            android:textColor="@android:color/white"
             app:layout_constraintBottom_toBottomOf="@+id/humidity_label"
             app:layout_constraintLeft_toLeftOf="@+id/horizontal_middle"
             tools:text="38%"/>
@@ -50,6 +55,8 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="@string/pressure_label"
+            android:fontFamily="sans-serif"
+            android:textColor="@color/detail_accent_label"
             app:layout_constraintBottom_toBottomOf="@+id/extra_details"
             app:layout_constraintLeft_toLeftOf="@+id/extra_details"
             app:layout_constraintTop_toTopOf="@+id/extra_details"/>
@@ -60,6 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="@{pressure}"
+            android:textColor="@android:color/white"
             app:layout_constraintBottom_toBottomOf="@+id/pressure_label"
             app:layout_constraintLeft_toLeftOf="@+id/horizontal_middle"
             tools:text="995 hPa"/>
@@ -70,6 +78,8 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="@string/wind_label"
+            android:fontFamily="sans-serif"
+            android:textColor="@color/detail_accent_label"
             app:layout_constraintBottom_toBottomOf="@+id/extra_details"
             app:layout_constraintLeft_toLeftOf="@+id/extra_details"
             app:layout_constraintTop_toBottomOf="@+id/pressure_label"
@@ -81,6 +91,7 @@
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:text="@{wind}"
+            android:textColor="@android:color/white"
             app:layout_constraintBottom_toBottomOf="@+id/wind_label"
             app:layout_constraintLeft_toLeftOf="@+id/horizontal_middle"
             tools:text="4km/h NW"/>
